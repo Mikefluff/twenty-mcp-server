@@ -6,8 +6,10 @@
   "type": "module",
   "scripts": {
     "dev": "tsx watch src/server.ts",
+    "dev:http": "tsx watch src/server.ts --mode=http",
     "build": "tsc -p tsconfig.build.json",
     "start": "node dist/server.js",
+    "start:http": "node dist/server.js --mode=http",
     "test": "jest --passWithNoTests",
     "test:watch": "jest --watch",
     "test:coverage": "jest --coverage",
@@ -40,6 +42,7 @@
     "@modelcontextprotocol/sdk": "^1.0.0",
     "axios": "^1.6.0",
     "dotenv": "^16.3.0",
+    "express": "^5.1.0",
     "graphql": "^16.8.0",
     "graphql-request": "^6.1.0",
     "joi": "^17.11.0",
@@ -47,6 +50,7 @@
     "zod": "^3.22.0"
   },
   "devDependencies": {
+    "@types/express": "^5.0.3",
     "@types/jest": "^29.5.0",
     "@types/node": "^20.0.0",
     "@types/supertest": "^6.0.0",

@@ -12,7 +12,7 @@ dotenv.config();
 const configSchema = z.object({
   TWENTY_API_URL: z.string().url(),
   TWENTY_API_KEY: z.string().min(1),
-  MCP_SERVER_PORT: z.coerce.number().default(3001),
+  MCP_SERVER_PORT: z.coerce.number().default(3002),
   LOG_LEVEL: z.enum(['debug', 'info', 'warn', 'error']).default('info'),
   CACHE_ENABLED: z.coerce.boolean().default(true),
   CACHE_TTL_SECONDS: z.coerce.number().default(300),
