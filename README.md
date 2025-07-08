@@ -1,10 +1,10 @@
 # Twenty MCP Server
 
-A Model Context Protocol (MCP) server that provides AI assistants with seamless integration to Twenty CRM. Supports both stdio and HTTP transport modes with a comprehensive set of CRM tools.
+A Model Context Protocol (MCP) server that provides AI assistants with seamless integration to Twenty CRM. Features 100% dynamic schema discovery with zero hardcode - automatically adapts to your custom fields and objects.
 
 ## Overview
 
-This server enables AI assistants to interact with Twenty CRM through the Model Context Protocol, providing real-time access to customer data, analytics, and CRM operations with intelligent search capabilities.
+This server enables AI assistants to interact with Twenty CRM through the Model Context Protocol, providing real-time access to customer data, analytics, and complete CRUD operations with dynamic schema discovery and intelligent search capabilities.
 
 ## Features
 
@@ -14,14 +14,18 @@ This server enables AI assistants to interact with Twenty CRM through the Model 
 
 ### 🔧 **Complete CRM Toolkit**
 - **Smart Search**: Find companies and people with wildcard support (`*`)
-- **Data Creation**: Create new companies and contacts
+- **Advanced Filtering**: Complex searches with GraphQL filters (isNotNull, gte, ilike, etc.)
+- **Full CRUD Operations**: Create, Read, Update, Delete companies and contacts
+- **Data Management**: Complete lifecycle management for CRM records
 - **Opportunity Management**: Access deals and sales pipeline
 - **Analytics**: Get CRM insights and metrics
 
 ### 🎯 **Production Features**
+- **100% Dynamic Schema**: Zero hardcode - automatically adapts to ANY Twenty CRM schema
+- **Smart Type Detection**: Automatically identifies scalar vs complex fields
 - **GraphQL + REST**: Intelligent API selection with fallback
 - **Real-time Integration**: Live Twenty CRM connection
-- **Type Safety**: Full TypeScript implementation
+- **Type Safety**: Full TypeScript implementation with flexible interfaces
 - **Error Handling**: Robust error recovery and logging
 
 ## Quick Start
@@ -77,30 +81,195 @@ This server enables AI assistants to interact with Twenty CRM through the Model 
 ## MCP Tools
 
 ### Search Tools
-- **`search_companies`** - Find companies by name, domain, or use `*` for all
-- **`search_people`** - Find contacts by name, email, or use `*` for all
+- **`advanced_search_people`** - Advanced search with flexible filters, conditions, and field selection
+- **`advanced_search_companies`** - Advanced company search with complex filters and field selection
 
 ### Creation Tools  
 - **`create_company`** - Create new company records
 - **`create_person`** - Create new contact records
+- **`create_person_with_company`** - Smart person creation with automatic company lookup/creation
+
+### Management Tools
+- **`update_company`** - Update existing company information
+- **`delete_company`** - Delete company records
+- **`update_person`** - Update existing contact information  
+- **`delete_person`** - Delete contact records
 
 ### Analytics Tools
 - **`get_opportunities`** - Retrieve deals and sales pipeline
 - **`get_crm_analytics`** - Get CRM metrics and insights
 
-### Search Examples
+### Schema Tools
+- **`get_schema_info`** - Get dynamic schema information for CRM objects and fields
+- **`test_dynamic_query`** - Test and preview dynamically generated GraphQL queries
+
+### Usage Examples
+
+#### Search Examples
 ```javascript
-// Find all companies
-search_companies({ query: "*", limit: 50 })
+// Find all companies  
+advanced_search_companies({ filters: {}, limit: 50 })
 
-// Find specific company
-search_companies({ query: "Acme Corp", limit: 10 })
+// Find specific company by name
+advanced_search_companies({ 
+  filters: { name: { ilike: "%Acme Corp%" } }, 
+  limit: 10 
+})
 
-// Find all people  
-search_people({ query: "*", limit: 50 })
+// Find all people
+advanced_search_people({ filters: {}, limit: 50 })
 
 // Find by email
-search_people({ query: "john@example.com", limit: 10 })
+advanced_search_people({
+  filters: { emails: { primaryEmail: { ilike: "%john@example.com%" } } },
+  limit: 10
+})
+```
+
+#### Creation Examples
+```javascript
+// Create company
+create_company({
+  name: "Acme Corp",
+  domainName: "acme.com"
+})
+
+// Create person (basic)
+create_person({
+  firstName: "John",
+  lastName: "Doe",
+  email: "john@example.com"
+})
+
+// Smart person creation with company auto-lookup
+create_person_with_company({
+  firstName: "Петр",
+  lastName: "Петров",
+  email: "petrov@roga.ru",
+  jobTitle: "Исполнительный директор",
+  companyName: "Петров и Рога"  // Will find existing or create new
+})
+```
+
+#### Management Examples
+```javascript
+// Update company information
+update_company({ 
+  id: "company-123", 
+  name: "New Company Name",
+  domainName: "newdomain.com",
+  employees: 150
+})
+
+// Update person details
+update_person({
+  id: "person-456",
+  firstName: "John",
+  lastName: "Smith", 
+  email: "john.smith@example.com",
+  phone: "+1-555-0123"
+})
+
+// Delete records
+delete_company({ id: "company-123" })
+delete_person({ id: "person-456" })
+```
+
+#### Schema Discovery Examples
+```javascript
+// Get all available objects
+get_schema_info()
+
+// Get detailed schema for specific object
+get_schema_info({ objectName: "Company" })
+get_schema_info({ objectName: "Person" })
+
+// Force refresh schema cache
+get_schema_info({ refresh: true })
+
+// Test dynamic query generation
+test_dynamic_query({ objectName: "Person" })
+test_dynamic_query({ objectName: "Company" })
+```
+
+#### Advanced Search with Field Selection
+
+Advanced search supports custom field selection to limit output and improve performance:
+
+- Use `fields` parameter to specify which fields to include in results
+- Without `fields`, returns all available fields from schema  
+- Supports nested fields like `linkedinLink`, `emails`, `phones`
+- Perfect for API integrations that need specific data only
+
+```javascript
+// Find people with LinkedIn profiles (CORRECT SYNTAX)
+advanced_search_people({ 
+  filters: { 
+    linkedinLink: { 
+      primaryLinkUrl: { neq: "" } 
+    } 
+  }
+})
+
+// Find engineers with custom field selection
+advanced_search_people({
+  filters: {
+    jobTitle: { ilike: "%engineer%" }
+  },
+  fields: ["firstName", "lastName", "jobTitle", "linkedinLink", "email"]
+})
+
+// Find companies with specific fields only
+advanced_search_companies({
+  filters: {
+    employees: { gte: 100 }
+  },
+  fields: ["name", "domainName", "employees", "city"],
+  limit: 20
+})
+
+// Find people in specific cities with LinkedIn data
+advanced_search_people({
+  filters: {
+    and: [
+      { jobTitle: { ilike: "%engineer%" } },
+      { city: { in: ["San Francisco", "New York", "Seattle"] } },
+      { linkedinLink: { primaryLinkUrl: { neq: "" } } }
+    ]
+  },
+  fields: ["firstName", "lastName", "jobTitle", "city", "linkedinLink"]
+})
+
+// Find people without email addresses
+advanced_search_people({
+  filters: { emails: { primaryEmail: { eq: "" } } }
+})
+
+// Find people with specific LinkedIn URL patterns
+advanced_search_people({
+  filters: {
+    linkedinLink: {
+      primaryLinkUrl: { ilike: "%linkedin.com/in/%" }
+    }
+  },
+  fields: ["firstName", "lastName", "linkedinLink", "jobTitle"]
+})
+
+// Find people WITHOUT LinkedIn profiles
+advanced_search_people({
+  filters: {
+    linkedinLink: {
+      primaryLinkUrl: { eq: "" }
+    }
+  }
+})
+
+// Get minimal contact info for large searches
+advanced_search_people({
+  filters: { city: { eq: "San Francisco" } },
+  fields: ["firstName", "lastName", "email"],
+  limit: 100
+}
 ```
 
 ## Configuration
@@ -207,12 +376,25 @@ docker-compose logs -f twenty-mcp-server
 
 ## API Integration
 
+### Dynamic Schema Discovery
+
+The server automatically discovers your Twenty CRM schema and adapts to custom fields:
+
+```typescript
+// Schema is discovered at runtime
+const schemaInfo = await twentyClient.schema.getSchema();
+const companyFields = await twentyClient.schema.getObjectFields('Company');
+
+// GraphQL queries are built dynamically based on actual schema
+const fieldsString = await schemaManager.buildGraphQLQuery('Company', 'query');
+```
+
 ### GraphQL Primary, REST Fallback
 
 The server intelligently uses Twenty's GraphQL API with automatic REST fallback:
 
 ```typescript
-// Searches both firstName and lastName fields
+// Dynamic query generation based on actual schema
 query SearchPeople($searchText: String!, $limit: Int!) {
   people(filter: { 
     or: [
@@ -222,17 +404,23 @@ query SearchPeople($searchText: String!, $limit: Int!) {
     ]
   }, first: $limit) {
     edges {
-      node { id name emails phones createdAt }
+      node { 
+        // All fields from schema automatically included
+        id name emails phones createdAt
+        // + any custom fields you've added
+      }
     }
   }
 }
 ```
 
-### Wildcard Search Support
+### Flexible Data Handling
 
-- Use `*` to search all records
-- Use specific terms for filtered search  
-- Automatic `%wildcard%` pattern matching
+- **Dynamic Fields**: Automatically includes all schema fields
+- **Custom Objects**: Works with any custom objects you create
+- **Wildcard Search**: Use `*` to search all records
+- **Advanced Filters**: GraphQL-powered complex searches
+- **Type Safety**: Flexible interfaces that adapt to your schema
 
 ## Troubleshooting
 
